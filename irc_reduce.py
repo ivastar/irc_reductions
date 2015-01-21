@@ -53,18 +53,14 @@ def process_images_irc0222a():
     
     import glob
     from threedhst.prep_flt_astrodrizzle import prep_direct_grism_pair as pair    
+    import threedhst.sex as sx
+
     
     ### Reduce the F160W image, will use as reference, align to itself.
     file = 'IRC0222A-04-258-F160W_asn.fits'
     pair(direct_asn=file, grism_asn=None, radec=None, raw_path='../RAW/', mask_grow=8, scattered_light=False, 
     final_scale=0.06, skip_direct=False, ACS=False)
-    
-    for filter in ['F105W','F125W']:
-        files= glob.glob('IRC0222B*'+filter+'_asn.fits')
-        for i in range(len(files)):
-            pair(direct_asn=files[i], grism_asn=None, radec=radec_cat, raw_path='../RAW/', mask_grow=8, scattered_light=False, final_scale=0.06, 
-            skip_direct=False, ACS=False,align_threshold=8.)
-    
+        
     ### Make a catalog based on F160W image
     s = sx.SExtractor()
     s.aXeParams()
@@ -72,16 +68,16 @@ def process_images_irc0222a():
     sx.sexcatRegions('test.cat', 'test.reg', format=1)
     tmp_cat = sx.mySexCat('test.cat')
     radec_cat = 'IRC0222A-04-258-F160W_radec.cat'
-    with open(redec_cat,'w') as f:
+    with open(radec_cat,'w') as f:
         for i in range(tmp_cat.nrows):
             f.write('{}\t{}\n'.format(tmp_cat['X_WORLD'][i],tmp_cat['Y_WORLD'][i]))
         
-    files= glob.glob('IRC0222A-04-258-F125W_asn.fits')
-    pair(direct_asn=files[i], grism_asn=None, radec=radec_cat, raw_path='../RAW/', mask_grow=8, scattered_light=False, final_scale=0.06, 
-        skip_direct=False, ACS=False,align_threshold=8.)
+    for file in ['IRC0222A-03-258-F105W_asn.fits','IRC0222A-04-258-F125W_asn.fits']    
+        pair(direct_asn=file, grism_asn=None, radec=radec_cat, raw_path='../RAW/', mask_grow=8, scattered_light=False, final_scale=0.06, 
+            skip_direct=False, ACS=False,align_threshold=8.)
     
-    direct = glob.glob('IRC0222A*F105W_asn.fits')
-    grism = glob.glob('IRC0222B*G102_asn.fits')
+    direct = ['IRC0222A-09-266-F105W_asn.fits','IRC0222A-13-256-F105W_asn.fits']
+    grism = ['IRC0222A-09-266-G102_asn.fits', 'IRC0222A-13-256-G102_asn.fits']
     for i in range(len(direct)):
         pair(direct_asn=direct[i], grism_asn=grism[i], radec=radec_cat, raw_path='../RAW/', mask_grow=8, scattered_light=False, final_scale=0.06, 
         skip_direct=False, ACS=False, align_threshold=8.)
@@ -109,7 +105,7 @@ def process_images_irc0222b():
     sx.sexcatRegions('test.cat', 'test.reg', format=1)
     tmp_cat = sx.mySexCat('test.cat')
     radec_cat = 'IRC0222B-12-244-F160W_radec.cat'
-    with open(redec_cat,'w') as f:
+    with open(radec_cat,'w') as f:
         for i in range(tmp_cat.nrows):
             f.write('{}\t{}\n'.format(tmp_cat['X_WORLD'][i],tmp_cat['Y_WORLD'][i]))
     
@@ -126,4 +122,12 @@ def process_images_irc0222b():
         skip_direct=False, ACS=False, align_threshold=8.)
 
 
+
+#def combine_images():
+    
+    
+#def detection():
+
+
+#def interlace():
 
