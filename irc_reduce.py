@@ -100,19 +100,16 @@ def make_mosaic_irc0222a():
         path_to_FLT='./', run_multidrizzle=False)
     threedhst.utils.combine_asn_shifts(f105w_files, out_root='IRC0222A-F105W',
         path_to_FLT='./', run_multidrizzle=False)
-    
-    ### This nexr sequence does not work with the current version of astrodrizzle
-    
+        
     ### run astrodrizzle with all images to figure out size for mosaic
-    #drizzlepac.astrodrizzle.AstroDrizzle('IRC0222A_direct_asn.fits', clean=True, final_scale=0.06, 
-    #    final_pixfrac=0.8, context=False, final_bits=576, preserve=False, driz_cr_snr='5.0 4.0', 
-    #    driz_cr_scale = '2.5 0.7', final_wht_type = 'IVM', skysub = False)
+    drizzlepac.astrodrizzle.AstroDrizzle('IRC0222A_direct_asn.fits', clean=True, final_scale=0.06, 
+        final_pixfrac=0.8, context=False, final_bits=576, preserve=False, driz_cr_snr='5.0 4.0', 
+        driz_cr_scale = '2.5 0.7', final_wht_type = 'IVM', skysub = False, final_wcs=True)
     ### run astrodrizzle for each to make the same size mosaic
-    #for file in ['IRC0222A-F105W_asn.fits','IRC0222A-04-258-F125W_asn.fits','IRC0222A-04-258-F160W_asn.fits']:
-    #drizzlepac.astrodrizzle.AstroDrizzle(file, clean=True, context=False, final_pixfrac=0.8, preserve=False, 
-    #    driz_cr_snr='5.0 4.0', driz_cr_scale = '2.5 0.7', final_refimage='IRC0222A_direct_drz_sci.fits')
+    for file in ['IRC0222A-F105W_asn.fits','IRC0222A-04-258-F125W_asn.fits','IRC0222A-04-258-F160W_asn.fits']:
+        drizzlepac.astrodrizzle.AstroDrizzle(file, clean=True, context=False, final_pixfrac=0.8, preserve=False, 
+            driz_cr_snr='5.0 4.0', driz_cr_scale = '2.5 0.7', final_refimage='IRC0222A_direct_drz_sci.fits', final_wcs=True)
     
-
     ### coadd all images, normalizing zeropoint to F105W, weigh by inverse variance
     ### make a detection noise equalized image image
     print 'IRC0222A-F105W'
@@ -162,9 +159,9 @@ def make_mosaic_irc0222a():
 def copy_flts(field='IRC0222A'):
     
     if field == 'IRC0222A':
-        files = ['IRC0222A-09-266-F105W_asn.fits','IRC0222A-13-256-F105W_asn.fits','IRC0222A-09-266-G102_asn.fits','IRC0222A-09-266-G102_asn.fits']
+        files = ['IRC0222A-09-266-F105W_asn.fits','IRC0222A-13-256-F105W_asn.fits','IRC0222A-09-266-G102_asn.fits','IRC0222A-13-256-G102_asn.fits']
     if field == 'IRC0222B':
-        files = ['IRC0222B-05-244-F140W_asn.fits','IRC0222B-10-254-F140W_asn.fits','IRC0222B_direct_asn.fits','IRC0222B-05-244-G141_asn.fits','IRC0222B-10-254-G141_asn.fits']
+        files = ['IRC0222B-05-244-F140W_asn.fits','IRC0222B-10-254-F140W_asn.fits','IRC0222B-05-244-G141_asn.fits','IRC0222B-10-254-G141_asn.fits']
     
     for asn_file in files:
         os.system('rsync -av {} ../INTERLACE_{}/'.format(asn_file,field))
@@ -209,7 +206,7 @@ def interlace_irc0222a():
     
     # Make models.
     inter = glob.glob('IRC0222A-*G102_inter.fits')
-    redo = True
+    redo = False
     for i in range(len(inter)):
         pointing = inter[i].split('-G102_inter')[0]
         if (not os.path.exists(pointing+'_model.fits')) | redo:
@@ -222,12 +219,10 @@ def interlace_irc0222a():
        
     # Extract objects.
     inter = glob.glob('IRC0222A-*G102_inter.fits')
-    redo = True
     for i in range(len(inter)):
         pointing = inter[i].split('-G102_inter')[0]
-        if (not os.path.exists(pointing+'_model.fits')) | redo:
-            model = unicorn.reduce.process_GrismModel(pointing, grism='G102')
-            model.extract_spectra_and_diagnostics(MAG_LIMIT=24.)
+        model = unicorn.reduce.process_GrismModel(pointing, grism='G102',direct='F105W')
+        model.extract_spectra_and_diagnostics(MAG_LIMIT=24.)
     
     
 def process_images_irc0222b():
@@ -288,6 +283,15 @@ def make_mosaic_irc0222b():
         path_to_FLT='./', run_multidrizzle=False)
     
     #def combine_images():
+    ### run astrodrizzle with all images to figure out size for mosaic
+    drizzlepac.astrodrizzle.AstroDrizzle('IRC0222B_direct_asn.fits', clean=True, final_scale=0.06, 
+        final_pixfrac=0.8, context=False, final_bits=576, preserve=False, driz_cr_snr='5.0 4.0', 
+        driz_cr_scale = '2.5 0.7', final_wht_type = 'IVM', skysub = False, final_wcs=True)
+    ### run astrodrizzle for each to make the same size mosaic
+    for file in ['IRC0222B-11-244-F105W_asn.fits','IRC0222B-12-244-F125W_asn.fits','IRC0222B-F140W_asn.fits','IRC0222B-12-244-F160W_asn.fits']:
+        drizzlepac.astrodrizzle.AstroDrizzle(file, clean=True, context=False, final_pixfrac=0.8, preserve=False, 
+            driz_cr_snr='5.0 4.0', driz_cr_scale = '2.5 0.7', final_refimage='IRC0222B_direct_drz_sci.fits', final_wcs=True)
+    
     
     ### coadd all images, normalizing zeropoint to F105W, weigh by inverse variance
     ### make a detection noise equalized image image
