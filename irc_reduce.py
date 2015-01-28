@@ -159,7 +159,27 @@ def make_mosaic_irc0222a():
     os.system(sextr)
     
 
+def copy_flts(field='IRC0222A'):
+    
+    if field == 'IRC0222A':
+        files = ['IRC0222A-09-266-F105W_asn.fits','IRC0222A-13-256-F105W_asn.fits','IRC0222A-09-266-G102_asn.fits','IRC0222A-09-266-G102_asn.fits']
+    if field == 'IRC0222B':
+        files = ['IRC0222B-05-244-F140W_asn.fits','IRC0222B-10-254-F140W_asn.fits','IRC0222B_direct_asn.fits','IRC0222B-05-244-G141_asn.fits','IRC0222B-10-254-G141_asn.fits']
+    
+    for asn_file in files:
+        os.system('rsync -av {} ../INTERLACE_{}/'.format(asn_file,field))
+        asn = threedhst.utils.ASNFile(asn_file)
+        for exp in asn.exposures:
+            os.system('rsync -av {}_flt.fits ../INTERLACE_{}/'.format(exp,field))
+
+
 def interlace_irc0222a():
+    """
+    Interlace the final FLT images and make an interlaced reference image.
+    Create a model. Refine background.
+    Extract objects down to F105W=24.
+    This is all done in the INTERLACE_IRC0222A directory.
+    """
 
     import unicorn
     from unicorn.reduce import adriz_blot_from_reference as adriz_blot
@@ -169,9 +189,9 @@ def interlace_irc0222a():
     NGROWX=100
     NGROWY=1
     pad=60
-    CATALOG='sextr/IRC0222A-IR.cat'
-    REF_IMAGE = 'IRC0222A-IR_sci.fits'
-    SEG_IMAGE = 'sextr/IRC0222A-IR.seg.fits'
+    CATALOG='../PREP_FLT/sextr/IRC0222A-IR.cat'
+    REF_IMAGE = '../PREP_FLT/IRC0222A-IR_sci.fits'
+    SEG_IMAGE = '../PREP_FLT/sextr/IRC0222A-IR.seg.fits'
     REF_FILTER='F105W'
     REF_EXT = 0
 
@@ -187,6 +207,7 @@ def interlace_irc0222a():
         unicorn.reduce.interlace_combine(pointing+'-F105W', view=False, use_error=True, make_undistorted=False, pad=pad, NGROWX=NGROWX, NGROWY=NGROWY, ddx=0, ddy=0, growx=2, growy=2, auto_offsets=True, ref_exp=0)
         unicorn.reduce.interlace_combine(pointing+'-G102', view=False, use_error=True, make_undistorted=False, pad=pad, NGROWX=NGROWX, NGROWY=NGROWY, ddx=0, ddy=0, growx=2, growy=2, auto_offsets=True, ref_exp=0)
     
+    # Make models.
     inter = glob.glob('IRC0222A-*G102_inter.fits')
     redo = True
     for i in range(len(inter)):
@@ -199,12 +220,13 @@ def interlace_irc0222a():
                  model.refine_mask_background(grow_mask=12, threshold=0.001, update=True,
                      resid_threshold=4, clip_left=640, save_figure=True, interlace=True)
        
+    # Extract objects.
     inter = glob.glob('IRC0222A-*G102_inter.fits')
     redo = True
     for i in range(len(inter)):
         pointing = inter[i].split('-G102_inter')[0]
         if (not os.path.exists(pointing+'_model.fits')) | redo:
-            model = unicorn.reduce.process_GrismModel(pointing)
+            model = unicorn.reduce.process_GrismModel(pointing, grism='G102')
             model.extract_spectra_and_diagnostics(MAG_LIMIT=24.)
     
     
@@ -314,6 +336,13 @@ def make_mosaic_irc0222b():
 
 def interlace_irc0222b():
 
+    """
+    Interlace the final FLT images and make an interlaced reference image.
+    Create a model. Refine background.
+    Extract objects down to F140W=24.
+    This is all done in the INTERLACE_IRC0222B directory.
+    """
+    
     import unicorn
     from unicorn.reduce import adriz_blot_from_reference as adriz_blot
     import scipy.ndimage as nd
@@ -322,9 +351,9 @@ def interlace_irc0222b():
     NGROWX=100
     NGROWY=1
     pad=60
-    CATALOG='sextr/IRC0222B-IR.cat'
-    REF_IMAGE = 'IRC0222B-IR_sci.fits'
-    SEG_IMAGE = 'sextr/IRC0222B-IR.seg.fits'
+    CATALOG='../PREP_FLT/sextr/IRC0222B-IR.cat'
+    REF_IMAGE = '../PREP_FLT/IRC0222B-IR_sci.fits'
+    SEG_IMAGE = '../PREP_FLT/sextr/IRC0222B-IR.seg.fits'
     REF_FILTER='F140W'
     REF_EXT = 0
 
@@ -340,6 +369,7 @@ def interlace_irc0222b():
         unicorn.reduce.interlace_combine(pointing+'-F140W', view=False, use_error=True, make_undistorted=False, pad=pad, NGROWX=NGROWX, NGROWY=NGROWY, ddx=0, ddy=0, growx=2, growy=2, auto_offsets=True, ref_exp=0)
         unicorn.reduce.interlace_combine(pointing+'-G141', view=False, use_error=True, make_undistorted=False, pad=pad, NGROWX=NGROWX, NGROWY=NGROWY, ddx=0, ddy=0, growx=2, growy=2, auto_offsets=True, ref_exp=0)
     
+    #### Make models.
     inter = glob.glob('IRC0222B-*G141_inter.fits')
     redo = True
     for i in range(len(inter)):
@@ -352,3 +382,11 @@ def interlace_irc0222b():
                  model.refine_mask_background(grow_mask=12, threshold=0.001, update=True,
                      resid_threshold=4, clip_left=640, save_figure=True, interlace=True)
 
+    #### Extract objects.
+    inter = glob.glob('IRC0222B-*G141_inter.fits')
+    redo = True
+    for i in range(len(inter)):
+        pointing = inter[i].split('-G141_inter')[0]
+        if (not os.path.exists(pointing+'_model.fits')) | redo:
+            model = unicorn.reduce.process_GrismModel(pointing, grism='G141')
+            model.extract_spectra_and_diagnostics(MAG_LIMIT=24.)
